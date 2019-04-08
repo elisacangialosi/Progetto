@@ -1,0 +1,438 @@
+---
+title: "validationStepsAgreementsMeasures"
+author: "Biagio Palese"
+date: "1/10/2019"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r, results='hide', warning=FALSE}
+###Data
+##GoldenStandard set
+
+library(knitr)
+library(tidyverse)
+load("/Users/Biagio/Desktop/biagio/Projects/ta/parameterTop/topicsCombined.rda")
+goldenSet <- df_topicsCombined[, c(1:5)]
+goldenSet$group <- gsub("([[:alpha:]]+)","",goldenSet$reviewId)#create a variable that identifies the review/response pairs
+goldenSet2 <- goldenSet %>% arrange(group)# I order the dataset by the group, the objective is to select random group and run the validation of individual sentences as well as reviews of complete pairs of review response
+goldenSet2$index <- c(1:length(goldenSet2$id))# I create a new column that uniquely identify each sentence
+x <- goldenSet2 %>% distinct(group)#create a vector with unique group number, I will randomly select group for my validation
+set.seed(0100)
+s <- sample(x$group,250)#random sample of 250 group with a pair of review response for a total of 500 documents on which we will create our golden set
+goldenSetlabel <- filter(goldenSet2,group %in%s)# final dataset subject to manual labeling
+#save(goldenSetLabel, file = "goldenSetValidation.rda")
+```
+
+```{r}
+#Review level validation-golden standard set
+goldenSetRevRes <- goldenSetlabel %>%  select(fullText,group,reviewId) %>% distinct(group,fullText,reviewId)
+#write.csv(goldenSetRevRes, file = "./goldenSetRevRes.csv") #added in excel topic labels and notes for the those working on the validation--> file goldenSetRevRes.xlsx
+```
+
+
+####Step1
+
+```{r}
+load("validationStepsdf/validationStep1.rda")
+
+
+reviewTopicStep1 <- tidyValidationStep1 %>% group_by(reviewID,topicIdentified,topicValidator) %>% summarise() %>% na.omit()
+
+
+
+reviewlabelsStep1 <- reviewTopicStep1 %>% group_by(reviewID, topicIdentified) %>% count()
+test <- spread(reviewTopicStep1, topicValidator,  topicValidator)# topics and raters as columns
+test2 <- spread(reviewTopicStep1, topicIdentified, topicIdentified)# raters and topics as columns
+test3 <- spread(reviewlabelsStep1, topicIdentified, n)# how many raters identify each topic per document, the document is the row
+reviewlabelsStep1$id <- c(1:length(reviewlabelsStep1$reviewID))
+test4 <- spread(reviewlabelsStep1, topicIdentified, n)# frequency of document , the topic is the row
+test5 <- test4 %>% add_column(unclassified=5-rowSums(.[3:9], na.rm = T)) %>% mutate_all(funs(replace(., is.na(.), 0)))# I add unclassified colum so I can have always 5 rater per each observation and comply with fleiss kappa
+
+ps_func <- function(x) {
+  sum(x)/(length(x)*5)
+}
+
+ps<- test5[,3:10] %>%  summarise_all(ps_func)
+Pe <- sum(ps^2)#Pe fleiss kappa formula
+
+p_func <- function(x) {
+  x <- x^2
+  y <- rowSums(x)
+  (y-5)/20
+}
+p <- p_func(test5[,3:10])#Ps for each row of the fleiss kappa
+P <- sum(p)/length(test5$reviewID)#P average in the fleiss kappa
+k1 <- (P-Pe)/(1-Pe)#fleiss kappa
+```
+
+####Step2
+
+```{r}
+load("validationStepsdf/validationStep2.rda")
+
+
+reviewTopicStep2 <- tidyValidationStep2 %>% group_by(reviewID,topicIdentified,topicValidator) %>% summarise() %>% na.omit()
+
+
+
+reviewlabelsStep2 <- reviewTopicStep2 %>% group_by(reviewID, topicIdentified) %>% count()
+test <- spread(reviewTopicStep2, topicValidator,  topicValidator)# topics and raters as columns
+test2 <- spread(reviewTopicStep2, topicIdentified, topicIdentified)# raters and topics as columns
+test3 <- spread(reviewlabelsStep2, topicIdentified, n)# how many raters identify each topic per document, the document is the row
+reviewlabelsStep2$id <- c(1:length(reviewlabelsStep2$reviewID))
+test4 <- spread(reviewlabelsStep2, topicIdentified, n)# frequency of document , the topic is the row
+test5 <- test4 %>% add_column(unclassified=5-rowSums(.[3:9], na.rm = T)) %>% mutate_all(funs(replace(., is.na(.), 0)))# I add unclassified colum so I can have always 5 rater per each observation and comply with fleiss kappa
+
+ps_func <- function(x) {
+  sum(x)/(length(x)*5)
+}
+
+ps<- test5[,3:10] %>%  summarise_all(ps_func)
+Pe <- sum(ps^2)#Pe fleiss kappa formula
+
+p_func <- function(x) {
+  x <- x^2
+  y <- rowSums(x)
+  (y-5)/20
+}
+p <- p_func(test5[,3:10])#Ps for each row of the fleiss kappa
+P <- sum(p)/length(test5$reviewID)#P average in the fleiss kappa
+k2 <- (P-Pe)/(1-Pe)#fleiss kappa
+```
+
+####Step2b
+
+```{r}
+load("validationStepsdf/validationStep2meeting.rda")
+
+
+reviewTopicStep2b <- tidyValidationStep2meeting %>% group_by(reviewID,topicIdentified,topicValidator) %>% summarise() %>% na.omit()
+
+
+
+reviewlabelsStep2b <- reviewTopicStep2b %>% group_by(reviewID, topicIdentified) %>% count()
+test <- spread(reviewTopicStep2b, topicValidator,  topicValidator)# topics and raters as columns
+test2 <- spread(reviewTopicStep2b, topicIdentified, topicIdentified)# raters and topics as columns
+test3 <- spread(reviewlabelsStep2b, topicIdentified, n)# how many raters identify each topic per document, the document is the row
+reviewlabelsStep2b$id <- c(1:length(reviewlabelsStep2b$reviewID))
+test4 <- spread(reviewlabelsStep2b, topicIdentified, n)# frequency of document , the topic is the row
+test5 <- test4 %>% add_column(unclassified=5-rowSums(.[3:9], na.rm = T)) %>% mutate_all(funs(replace(., is.na(.), 0)))# I add unclassified colum so I can have always 5 rater per each observation and comply with fleiss kappa
+
+ps_func <- function(x) {
+  sum(x)/(length(x)*5)
+}
+
+ps<- test5[,3:10] %>%  summarise_all(ps_func)
+Pe <- sum(ps^2)#Pe fleiss kappa formula
+
+p_func <- function(x) {
+  x <- x^2
+  y <- rowSums(x)
+  (y-5)/20
+}
+p <- p_func(test5[,3:10])#Ps for each row of the fleiss kappa
+P <- sum(p)/length(test5$reviewID)#P average in the fleiss kappa
+k2b <- (P-Pe)/(1-Pe)#fleiss kappa
+```
+####Step3
+
+```{r}
+load("validationStepsdf/validationStep3.rda")
+
+
+reviewTopicStep3 <- tidyValidationStep3 %>% group_by(reviewID,topicIdentified,topicValidator) %>% summarise() %>% na.omit()
+
+
+
+reviewlabelsStep3 <- reviewTopicStep3 %>% group_by(reviewID, topicIdentified) %>% count()
+test <- spread(reviewTopicStep3, topicValidator,  topicValidator)# topics and raters as columns
+test2 <- spread(reviewTopicStep3, topicIdentified, topicIdentified)# raters and topics as columns
+test3 <- spread(reviewlabelsStep3, topicIdentified, n)# how many raters identify each topic per document, the document is the row
+reviewlabelsStep3$id <- c(1:length(reviewlabelsStep3$reviewID))
+test4 <- spread(reviewlabelsStep3, topicIdentified, n)# frequency of document , the topic is the row
+test5 <- test4 %>% add_column(unclassified=5-rowSums(.[3:9], na.rm = T)) %>% mutate_all(funs(replace(., is.na(.), 0)))# I add unclassified colum so I can have always 5 rater per each observation and comply with fleiss kappa
+
+ps_func <- function(x) {
+  sum(x)/(length(x)*5)
+}
+
+ps<- test5[,3:10] %>%  summarise_all(ps_func)
+Pe <- sum(ps^2)#Pe fleiss kappa formula
+
+p_func <- function(x) {
+  x <- x^2
+  y <- rowSums(x)
+  (y-5)/20
+}
+p <- p_func(test5[,3:10])#Ps for each row of the fleiss kappa
+P <- sum(p)/length(test5$reviewID)#P average in the fleiss kappa
+k3 <- (P-Pe)/(1-Pe)#fleiss kappa
+```
+####Step4
+
+```{r}
+load("validationStepsdf/validationStep4.rda")
+
+
+reviewTopicStep4 <- tidyValidationStep4 %>% group_by(reviewID,topicIdentified,topicValidator) %>% summarise() %>% na.omit()
+
+
+
+reviewlabelsStep4 <- reviewTopicStep4 %>% group_by(reviewID, topicIdentified) %>% count()
+test <- spread(reviewTopicStep4, topicValidator,  topicValidator)# topics and raters as columns
+test2 <- spread(reviewTopicStep4, topicIdentified, topicIdentified)# raters and topics as columns
+test3 <- spread(reviewlabelsStep4, topicIdentified, n)# how many raters identify each topic per document, the document is the row
+reviewlabelsStep4$id <- c(1:length(reviewlabelsStep4$reviewID))
+test4 <- spread(reviewlabelsStep4, topicIdentified, n)# frequency of document , the topic is the row
+test5 <- test4 %>% add_column(unclassified=5-rowSums(.[3:9], na.rm = T)) %>% mutate_all(funs(replace(., is.na(.), 0)))# I add unclassified colum so I can have always 5 rater per each observation and comply with fleiss kappa
+
+ps_func <- function(x) {
+  sum(x)/(length(x)*5)
+}
+
+ps<- test5[,3:10] %>%  summarise_all(ps_func)
+Pe <- sum(ps^2)#Pe fleiss kappa formula
+
+p_func <- function(x) {
+  x <- x^2
+  y <- rowSums(x)
+  (y-5)/20
+}
+p <- p_func(test5[,3:10])#Ps for each row of the fleiss kappa
+P <- sum(p)/length(test5$reviewID)#P average in the fleiss kappa
+k4 <- (P-Pe)/(1-Pe)#fleiss kappa
+```
+
+
+####Step 5: Consolidation stage
+The last step of the validation is discussed extensively in the next sections.
+
+####Review/Response pairs dataset
+```{r}
+
+load("validationStepsdf/validationStep5.rda")
+
+
+reviewTopicStep5 <- tidyValidationStep5 %>% group_by(reviewID,topicIdentified,topicValidator) %>% summarise() %>% na.omit()
+
+
+
+reviewlabelsStep5 <- reviewTopicStep5 %>% group_by(reviewID, topicIdentified) %>% count()
+test <- spread(reviewTopicStep5, topicValidator,  topicValidator)# topics and raters as columns
+test2 <- spread(reviewTopicStep5, topicIdentified, topicIdentified)# raters and topics as columns
+test3 <- spread(reviewlabelsStep5, topicIdentified, n)# how many raters identify each topic per document, the document is the row
+
+reviewlabelsStep5$id <- c(1:length(reviewlabelsStep5$reviewID))
+test4 <- spread(reviewlabelsStep5, topicIdentified, n)# frequency of document , the topic is the row
+test5 <- test4 %>% add_column(unclassified=5-rowSums(.[3:9], na.rm = T)) %>% mutate_all(funs(replace(., is.na(.), 0)))# I add unclassified colum so I can have always 5 rater per each observation and comply with fleiss kappa
+
+ps_func <- function(x) {
+  sum(x)/(length(x)*5)
+}
+
+ps<- test5[,3:10] %>%  summarise_all(ps_func)
+Pe <- sum(ps^2)#Pe fleiss kappa formula
+
+p_func <- function(x) {
+  x <- x^2
+  y <- rowSums(x)
+  (y-5)/20
+}
+p <- p_func(test5[,3:10])#Ps for each row of the fleiss kappa
+P <- sum(p)/length(test5$reviewID)#P average in the fleiss kappa
+k5 <- (P-Pe)/(1-Pe)#fleiss kappa
+
+
+
+
+
+#how to calclate fleis kappa for each document??
+# ps_obs <- test5[,-2] %>% group_by(reviewID) %>%  mutate(obs=n()) %>% distinct(obs) %>% select(obs)# n telling me how many time I need to multiply numnber of rater for
+# ps_obs2 <- left_join(test3, ps_obs, by="reviewID")#dataset for calcute fleiss at a document level
+# y <- ps_obs2[1,]
+# ps_func_obs <- function(x) {
+#   x/(y*5)
+# }
+# pe_ob <- 
+# 
+# 
+# ps_func_obs(y)
+# 
+# ps_func_obs(ps_obs[1:3,3:11])
+# select(food:unclassified) %>%  mutate_all(ps_func)
+
+
+
+sameLabelStep5 <- reviewTopicStep5 %>% group_by(reviewID, topicIdentified) %>% count()%>% 
+  filter(n>4)#real golden set--> those reviews/response in which I have full agreement
+sameLabelStep5$n <- sub("5|6|7|8", "5", sameLabelStep5$n)# If more than 5 reviewers identified a topic means that some reviewer inserted the same topic more than once so we consider 5,6,7,8 equivalent
+differentLabelStep5 <-  reviewTopicStep5 %>% group_by(reviewID, topicIdentified) %>% count()%>% 
+  filter(n<5)
+``` 
+I now take in consideration only those review that have all the topics in common or those that have no one topic that is label by all the raters inside the review
+```{r, results='hide'}
+agreementStep5 <- setdiff(unique(sameLabelStep5$reviewID), unique(differentLabelStep5$reviewID))#find those reviewID in which there is full agreement
+disagreementStep5<- setdiff( unique(differentLabelStep5$reviewID),unique(sameLabelStep5$reviewID))#find the id of the only document in which there is full disagreement
+
+```
+We also investigate how many documents have full agreement between labelers; meaning  all validators identified the exact same topics in each review or response. There are `r length(agreementStep5)` documents with complete agremeement between labelers. Moreover, we found how many document have complete disagreement. Meaning, that in these documents there is not a single topic identified by all validators. There are only `r length(disagreementStep5)` documents with complete disagreement over `r length(unique(tidyValidationStep5$reviewID))` documents categorized.
+So if the dataset of documents with full agreement is the following:
+```{r }
+
+reviewTopicfullAgreementStep5 <- sameLabelStep5 %>% group_by(reviewID) %>% spread(topicIdentified, topicIdentified) %>% filter(reviewID %in% agreementStep5)
+reviewlabelsStep5 <- reviewlabelsStep5[,-4]
+colnames(reviewlabelsStep5) <- c("reviewId", "topicIdentified", "n")
+reviewTopic_all_Step5 <- reviewlabelsStep5 %>% group_by(reviewId) %>% spread(topicIdentified, topicIdentified) 
+prova <- right_join(goldenSetRevRes,reviewTopic_all_Step5)
+#reviewTopic_all_Step5 %>% (reviewId %in% goldenSetRevRes)
+glimpse(reviewTopicfullAgreementStep5)
+glimpse(reviewTopic_all_Step5)
+```
+
+\pagebreak
+
+Finally, we decided to create a dataset in which for each document we retain only the topics labeled by all validators (partial agreement). Also this dataset is used to assess how much the topic extracted by each model are close to humans labeling. Themodel selection is based on how close is the identification of the topics in each document compared to humans.Please see the dataset below:
+```{r}
+reviewTopicpartialAgreementStep5 <- sameLabelStep5 %>% group_by(reviewID) %>% spread(topicIdentified, topicIdentified)
+glimpse(reviewTopicpartialAgreementStep5)
+```
+
+We want now to see how many of topics has been identified by all the validators in all the review/response and how many are identified in total by the 5 labelers. 
+```{r}
+reviewGoldag <- reviewlabelsStep5
+reviewFullag <- sameLabelStep5 %>%filter(reviewID %in% agreementStep5)# full agreement topics
+reviewPartialag <- sameLabelStep5# partial agreement topics
+table1 <- reviewGoldag %>% group_by(topicIdentified) %>%  summarise(Number= n()) %>% 
+    mutate(Percentage = round((Number/ sum(Number))*100, 2))
+colnames(table1) <- c("Topics", "Count", "Percentage")
+kable(table1, caption = "Topics extracted by all five labelers- Gold")
+table1 <- reviewFullag %>% group_by(topicIdentified) %>%  summarise(Number= n()) %>% 
+    mutate(Percentage = round((Number/ sum(Number))*100, 2))
+colnames(table1) <- c("Topics", "Count", "Percentage")
+kable(table1, caption = "Topics extracted by all five labelers- Full")
+table1 <- sameLabelStep5 %>% group_by(topicIdentified) %>%  summarise(Number= n()) %>% 
+    mutate(Percentage = round((Number/ sum(Number))*100, 2))
+colnames(table1) <- c("Topics", "Count", "Percentage")
+kable(table1, caption = "Topics extracted by all five labelers- Partial")
+
+```
+```{r}
+step5 <-Filter(function(x) !(all(x=="")), validationStep5)[,- c( 37:38)]# removing all the columns that contains all NA and rd columns that contains a comments that was suppose to be in the notes and bp notes
+#colnames(test) <- c("id", "fullText", "rater1", "rater1", "rater1", "rater1", "rater1", "rater1",  "rater2", "rater2", "rater2", "rater2", "rater2", "rater2", "rater3", "rater3", "rater3", "rater3", "rater4", "rater4", "rater4", "rater4", "rater4", "rater4", "rater5", "rater5", "rater5", "rater5", "rater5", "rater5")
+
+
+#rename all the validator name
+tidystep5 <- gather(step5, topicValidator, topicIdentified, Topic1bp:Topic6nicka)
+tidystep5$topicValidator <- sub("Topic1bp|Topic6bp|Topic2bp|Topic3bp|Topic4bp|Topic5bp|Topic7bp","rater1", tidystep5$topicValidator)
+tidystep5$topicValidator <- sub("Topic1rd|Topic6rd|Topic2rd|Topic3rd|Topic4rd|Topic5rd|Topic7rd","rater2", tidystep5$topicValidator)
+tidystep5$topicValidator <- sub("Topic1ew|Topic6ew|Topic2ew|Topic3ew|Topic4ew|Topic5ew","rater3", tidystep5$topicValidator)
+tidystep5$topicValidator <- sub("Topic1am|Topic6am|Topic2am|Topic3am|Topic4am|Topic5am","rater4", tidystep5$topicValidator)
+tidystep5$topicValidator <- sub("Topic1nicka|Topic6nicka|Topic2nicka|Topic3nicka|Topic4nicka|Topic5nicka","rater5", tidystep5$topicValidator)
+tidystep5$topicIdentified <- tidystep5$topicIdentified %>% tolower()
+#table(tidystep5$topicIdentified)
+tidystep5$topicIdentified <- sub("greeting and salutations|greetings and salutation|reetings and salutations|greetings and salutations|greetings and saluations","greetings and salutations", tidystep5$topicIdentified) 
+tidystep5$topicIdentified <- gsub("hotel aminities", "hotel amenities",tidystep5$topicIdentified)
+tidystep5$topicIdentified <- gsub("unclassified","unclassifiable",tidystep5$topicIdentified)
+tidystep5$topicIdentified <- gsub("serivce","service",tidystep5$topicIdentified)
+tidystep5$topicIdentified <- gsub("locations","location",tidystep5$topicIdentified)
+tidystep5$topicIdentified <- gsub("foom","food",tidystep5$topicIdentified)
+
+tidystep5$topicIdentified[13955] <- NA
+table2 <- tidystep5 %>% group_by(topicIdentified) %>% na.omit() %>%  summarise(Number= n()) %>% 
+    mutate(Percentage = round((Number/ sum(Number))*100, 2))
+colnames(table2) <- c("Topics", "Count", "Percentage")
+kable(table2, caption = "Total number of topics identified")
+
+step5Topic <- tidystep5 %>% group_by(reviewID,topicIdentified,topicValidator)  %>% summarize () %>% na.omit()
+rater1 <- filter(step5Topic, topicValidator == "rater1")
+rater2 <- filter(step5Topic, topicValidator == "rater2")
+rater3 <- filter(step5Topic, topicValidator == "rater3")
+rater4 <- filter(step5Topic, topicValidator == "rater4")
+rater5 <- filter(step5Topic, topicValidator == "rater5")
+raterTopics <-step5Topic %>% group_by(reviewID, topicIdentified) %>% spread(topicValidator, topicValidator)
+#rater1Topic <-rater1 %>% group_by(reviewID) %>% spread(topicIdentified, topicIdentified)see each rater topics identified
+
+```
+
+
+
+
+
+\pagebreak
+
+#### Topics by labelers
+
+From the chart it is clear that some topics are almost consistently identified by each reviewer (greetings and slautations, value, service, room, location), while other have more variability (food and hotel amenities)
+```{r}
+
+topicbyValidator <- step5Topic %>% group_by (topicValidator, topicIdentified) %>% count()#topic identifyied by each validator
+
+
+ggplot(data= filter(topicbyValidator, topicIdentified != "NA"), mapping = aes(x=topicIdentified, y=n, fill= topicIdentified))+
+  geom_bar(position="dodge",stat="identity")+
+  facet_grid(topicValidator ~.)+ 
+   coord_flip()+
+    labs(
+    title = "Figure 1: Topic identified by each rater",
+     x = "Topics by rater",
+     y = "Number of topics identified"
+   )+
+  geom_text(aes(label=n), position=position_dodge(width=0.5), vjust=-0.1)
+
+
+```
+
+Percent agreement by topics is reported below. The proportion confirm the comments made above. More specifically we have four topics with more than 90% agreement(greetings and slautations, service, room, location). While value agreement is above 88%, food agreement is around 81% and hotel amenities is the only topic with agreement below 80%.  
+
+```{r}
+agreementbytopic <- step5Topic %>% group_by(topicIdentified, reviewID) %>% summarise(n= n()) %>%   mutate(Percentage = round((n/ 5)*100, 2))
+proportionAgreement<- agreementbytopic %>% group_by(topicIdentified) %>% summarise(topic_proportion = round(mean(Percentage),2))
+ggplot(data= proportionAgreement, mapping = aes(x=topicIdentified, y=topic_proportion, fill= topicIdentified))+
+  geom_bar(position="dodge",stat="identity")+
+    labs(
+      title = "Figure 2: Per topic agreement between raters",
+     x = "Topics",
+     y = "Percent agreement by topic"
+   )+
+  geom_text(aes(label=topic_proportion), position=position_dodge(width=0.5), vjust=-0.1)
+
+
+
+```
+
+
+
+We than divided the  topics by the number of labelers that identified them. 5 represents a full agreement in terms of topics (this doesn't translate in full agreement in terms of document because each document is composed by multiple topics). In fact, those are the topics that all the labelers identified. 1 represents no agreement, only one labeler identify that topic per document. 
+```{r}
+topicbyValidatorperId <- step5Topic %>% group_by (topicValidator, topicIdentified, reviewID) %>% count()#topic identifided in the different id
+#step5Topic %>% group_by (topicIdentified) %>% count()#number topic identified
+reviewsR <- tidystep5 %>% group_by(reviewID,topicIdentified,topicValidator)  %>% summarize () %>% count() %>% na.omit()
+topicbyid<- step5Topic %>% group_by (reviewID) %>% count()#topic identified per review, if the n is not a multiple of 5 means there is not agreement, doesn't apply to 6 means someb
+#table(reviewsR$n)
+### to be reviewed review
+disagreement <- reviewsR %>% filter(n<5)
+#unique(disagreement$reviewID)
+
+table3 <- reviewsR %>% group_by(n)  %>%  summarise(Number= n()) %>% 
+    mutate(Percentage = round((Number/ sum(Number))*100, 2))
+colnames(table3) <- c("Number of labelers", "Number of topics identified", "Percentage of topics identified")
+kable(table3, caption = "Number of topics by number of labelers")
+
+
+```
+
+
+#### The three sets
+```{r}
+complete_set <- spread(reviewlabelsStep5[,-3], topicIdentified, topicIdentified)
+full_set <-reviewTopicfullAgreementStep5[,-2] 
+partial_set <- reviewTopicpartialAgreementStep5[,-2]
+```
+

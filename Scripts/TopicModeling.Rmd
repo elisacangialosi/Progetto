@@ -1,0 +1,169 @@
+---
+title: "Untitled"
+output: github_document
+---
+
+```{r}
+install.packages("NLP")
+library(tm)
+library(tidytext)
+```
+
+#Collapse into a one line text and switch text to lower case
+```{r}
+review_text <- paste(Sample$full)
+review_text <- tolower(review_text)
+review_text
+```
+
+#Split the vector at non-word characters
+```{r}
+split <- unlist(strsplit(review_text, "\\W+"))
+split
+```
+
+#Generate a table of frequncies and see how many times each word type occurs. Table() sorts in alphabetical order.
+```{r}
+table.split <- table(split)
+head(table.split)
+```
+
+#Sort in decreasing order.
+```{r}
+sorted.table.split <- sort(table.split, decreasing = TRUE)
+head(sorted.table.split, 15)
+```
+
+#The 15 most frequent words are not interesting because they consist of closed-class words, i.e. words that serve a grammatical function.
+#Getting rid of grammatical words would have the advantage of focusing on open class words (lexical words).
+#The bottom of the list consists of unusual characters, rare words or figures. 
+```{r}
+tail(sorted.table.split, 15)
+```
+#strplit() splits at non-words character. So words like "can't" are split into "can" and "t". 
+
+```{r}
+library(dplyr)
+reviews <- tibble(Sample)
+```
+
+
+#break the text into individual tokens
+```{r}
+reviews <- Sample %>%
+  unnest_tokens(word, full)
+head(sort(table(reviews), decreasing = TRUE), 15) #the 15 most frequent words are not interesting because they consist of closed-class words, i.e. words that serve a grammatical function.Getting rid of grammatical words would have the advantage of focusing on open class words (lexical words).
+```
+ 
+```{r}
+reviews <- reviews %>% filter(!word %in% stopwords("italian"))
+frequency <- reviews %>% count(word, sort = TRUE)
+```
+
+```{r}
+library(scales)
+library(ggplot2)
+reviews %>%
+  count(word, sort = TRUE) %>%
+  filter(n > 50) %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(word, n)) +
+  geom_col() +
+  xlab(NULL) +
+  coord_flip()
+
+```
+
+```{r}
+library(topicmodels)
+library(tm)
+#Convert into Term Document Matrix
+myCorpus <- VCorpus(VectorSource(Sample$full))
+tdm <- TermDocumentMatrix(myCorpus)
+inspect(tdm)
+lda_reviews <- LDA(tdm, k = 2, control = list(seed = 1234))
+lda_reviews
+```
+
+#Dataframe with only english reviews and responses
+
+```{r}
+library(NLP)
+library(cld2)
+data_all_full$fullText
+reviewResponse_en <- data_all_full %>% 
+  filter(detect_language(data_all_full$fullText) == 'en') #detect english reviews only
+is.na(reviewResponse_en) <- reviewResponse_en == ' '
+en_ReviewResponse <- reviewResponse_en[!is.na(reviewResponse_en$response),]
+```
+
+
+#Corpus and Document Term Matrix
+```{r}
+library(tokenizers)
+#split text into sentences prior tokenization into other forms. This returns a list. 
+sentences_reviews <- tokenize_sentences(en_ReviewResponse$fullText)
+nsentences_reviews <- sapply(sentences_reviews, length)
+sentences_rev <- unlist(sentences_reviews)# exctract the sentence from each review. (unlist simplifies a list structure, producing a vector that contains all the atomic components, thus characters.)
+nsentences_rev <- rep(seq_along(nsentences_reviews), nsentences_reviews)#track to which review each sentence refers to
+save(sentences_reviews,nsentences_reviews,sentences_rev,nsentences_rev, file = "sentence_rev_taiN.rda")
+
+```
+
+
+```{r}
+vectorT <-nsentences_reviews
+rvId <- rep(en_ReviewResponse$hotelid, vectorT) #replicate and stores the hotel ID for the length of the review. 
+reviewID <- rep(en_ReviewResponse$reviewID, vectorT) #replicate and stores the review ID for the length of the review.
+sentenceNumber <- ave(nsentences_rev, nsentences_rev, FUN = seq_along) #assign the sentence number inside each review
+#reviewNumber <- nsentences_rev#not necessary having the id
+textSentence <- sentences_rev
+id <- paste(reviewID, sentenceNumber, sep = "_")
+fullText <- rep(en_ReviewResponse$fullText, vectorT) #replicate and stores the fullText for the length of the review.
+#rating <- rep(df_engl$rating, vectorT)# consider If I want to add rating and helpfulness
+df_tai <- data.frame(rvId,id,reviewID,sentenceNumber,textSentence,fullText, stringsAsFactors = FALSE)
+
+```
+
+```{r}
+#df_tai$textSentence <- gsub(“((?:\b| )?([.,:;!?-]+)(?: |\b)?)“, ” \\1 “, df_tai$textSentence, perl=T)#allows to add a space between text and punctuation
+#myReader <- readTabular(mapping=list(content="textSentence", id="id"))
+#corpus_data <- VCorpus(DataframeSource(df_tai), readerControl=list(reader=myReader))
+#corpus_data <- tm_map(corpus_data,content_transformer(removePunctuation),preserve_intra_word_dashes = TRUE)
+
+#readTabular reads documents from a tabular data structure (list), with knowledge about its internal structure and metadata.
+df_tai$textSentence <- gsub("((?:\b| )?([.,:;!?-]+)(?: |\b)?)", "\\1", df_tai$textSentence, perl=T) #allows to add a space between text and punctuation
+docs <- data.frame(doc_id = "id", text = "textSentence")
+
+
+corpus_data <- VCorpus(DataframeSource(df_tai), readerControl= (reader = docs))
+corpus_data <- tm_map(corpus_data,content_transformer(removePunctuation),preserve_intra_word_dashes = TRUE)
+
+```
+
+
+```{r}
+corpus_data <- tm_map(corpus_data,content_transformer(removeNumbers))
+corpus_data <- tm_map(corpus_data,content_transformer(tolower))
+corpus_data <- tm_map(corpus_data, content_transformer(function (x) gsub("\\brn\\w+", "", x))) #remover words that start with rn
+corpus_data <- tm_map(corpus_data,removeWords,stopwords("en"))
+corpus_data <- tm_map(corpus_data,removeWords,stopwordsXPO6)
+#corpus_data <- tm_map(corpus_data,removeWords,salutation)
+corpus_data <- tm_map(corpus_data,content_transformer(stripWhitespace))
+dtm <- DocumentTermMatrix(corpus_data, control = list(wordLengths=c(2,30))) #from 2 to the Longest non-coined word in a major dictionary
+
+```
+
+#Term frequency–inverse document frequency
+
+```{r}
+term_tfidf <-
+   tapply(dtm$v/slam::row_sums(dtm)[dtm$i], dtm$j, mean)*log2(nDocs(dtm)/slam::col_sums(dtm >0))
+summary(term_tfidf)
+#remove words with low tfidf
+dtm2 <- dtm[, term_tfidf > min(term_tfidf)]
+dtm2 <- dtm2[,slam::col_sums(dtm2) > 10]# remove the term that appear less than 50 times
+dtm2 <- dtm2[slam::row_sums(dtm2) > 0,] #dtm_tfidf <- DocumentTermMatrix(corpus_data, control = list(weighting = weightTfIdf,wordLengths=c(3,30)))#tf-idf dtm
+
+```
+

@@ -1,0 +1,329 @@
+---
+title: "GoldStandardSet"
+output: github_document
+---
+```{r}
+##GoldenStandard set
+
+library(knitr)
+library(tidyverse)
+
+goldenSet <- en_ReviewResponse %>% select(-review_title, -stay_date, -review_score, -helpfulvote)
+goldenSet$group <- gsub("([[:alpha:]]+)","",goldenSet$reviewID) #create a variable that identifies the review/response pairs
+goldenSet2 <- goldenSet %>% arrange(group) # I order the dataset by the group, the objective is to select random group and run the validation of individual sentences as well as reviews of complete pairs of review response
+goldenSet2$index <- c(1:length(goldenSet2$reviewID)) #I create a new column that uniquely identifies each sentence
+x <- goldenSet2 %>% distinct(group) #create a vector with unique group number, I will randomly select group for my validation
+set.seed(0100)
+s <- sample(x$group,250)#random sample of 500 groups on which we will create our golden set
+goldenSetlabel <- filter(goldenSet2,group %in%s) # final dataset subject to manual labeling
+
+goldenSetlabel2 <- goldenSetlabel %>% 
+  select(fullText, reviewID, index) %>% 
+  bind_rows(
+    goldenSetlabel %>% 
+      transmute(fullText = response)
+  )
+#write.csv(goldenSetlabel2, "/users/elisacangialosi/Desktop/LouisianaStateUniversity/IISemester/BookingReviews/ProjectR/DataOutput/GoldenStandardSet.csv", row.names = TRUE ,na = " " )
+
+#save(goldenSetLabel, file = "goldenSetValidation.rda")
+```
+
+
+```{r}
+GoldData <- rbind(Andrea200,
+                  Enxhi200,
+                  Matteo200,
+                 Ornella200,
+                 Elisa200)
+```
+
+```{r}
+library(dplyr)
+#ProvaGold1 <- inner_join(Andrea200, Enxhi200, by = "Testo")
+#ProvaGold2 <- inner_join(ProvaGold1, Matteo200, by = "Testo")
+#ProvaGold3 <- inner_join(ProvaGold2,Ornella200, by = "Testo")
+#FinalGold <- inner_join(ProvaGold3, Elisa200, by = "Testo")
+
+#FinalGold[2] <- Sample[1]
+```
+
+```{r}
+rater1$name <- "rater1"
+rater2$name <- "rater2"
+rater3$name <- "rater3"
+rater4$name <- "rater4"
+rater5$name <- "rater5"
+```
+
+#Rater 1
+```{r}
+#Location
+rater1$loc_dummy <- ifelse(rater1$tema1 == "location" | rater1$tema2 == "location" | rater1$tema3 == "location" | rater1$tema4 == "location" | rater1$tema5 == "location" | rater1$tema6 == "location" | rater1$tema7 == "location" | rater1$tema8 == "location", 1, 0)
+rater1$loc_dummy <- ifelse(is.na(rater1$loc_dummy), 0, 1)
+
+#Servizio
+rater1$ser_dummy <- ifelse(rater1$tema1 == "servizio" | rater1$tema2 == "servizio" | rater1$tema3 == "servizio" | rater1$tema4 == "servizio" | rater1$tema5 == "servizio" | rater1$tema6 == "servizio" | rater1$tema7 == "servizio" | rater1$tema8 == "servizio", 1, 0)
+rater1$ser_dummy <- ifelse(is.na(rater1$ser_dummy), 0, 1)
+
+#Saluti
+rater1$greet_dummy <- ifelse(rater1$tema1 == "saluti" | rater1$tema2 == "saluti" | rater1$tema3 == "saluti" | rater1$tema4 == "saluti" | rater1$tema5 == "saluti" | rater1$tema6 == "saluti" | rater1$tema7 == "saluti" | rater1$tema8 == "saluti", 1, 0)
+rater1$greet_dummy <- ifelse(is.na(rater1$greet_dummy), 0, 1)
+
+#Stanza
+rater1$room_dummy <- ifelse(rater1$tema1 == "stanza" | rater1$tema2 == "stanza" | rater1$tema3 == "stanza" | rater1$tema4 == "stanza" | rater1$tema5 == "stanza" | rater1$tema6 == "stanza" | rater1$tema7 == "stanza" | rater1$tema8 == "stanza", 1, 0)
+rater1$room_dummy <- ifelse(is.na(rater1$room_dummy), 0, 1) 
+
+#Servizi dell'hotel
+rater1$amenit_dummy <- ifelse(rater1$tema1 == "servizi dell'hotel" | rater1$tema2 == "servizi dell'hotel" | rater1$tema3 == "servizi dell'hotel" | rater1$tema4 == "servizi dell'hotel" | rater1$tema5 == "servizi dell'hotel" | rater1$tema6 == "servizi dell'hotel" | rater1$tema7 == "servizi dell'hotel" | rater1$tema8 == "servizi dell'hotel", 1, 0)
+rater1$amenit_dummy <- ifelse(is.na(rater1$amenit_dummy), 0, 1) 
+
+#Servizi di ristorazione
+rater1$food_dummy <- ifelse(rater1$tema1 == "servizi di ristorazione" | rater1$tema2 == "servizi di ristorazione" | rater1$tema3 == "servizi di ristorazione" | rater1$tema4 == "servizi di ristorazione" | rater1$tema5 == "servizi di ristorazione" | rater1$tema6 == "servizi di ristorazione" | rater1$tema7 == "servizi di ristorazione" | rater1$tema8 == "servizi di ristorazione", 1, 0)
+rater1$food_dummy <- ifelse(is.na(rater1$food_dummy), 0, 1) 
+
+#Valore
+rater1$value_dummy <- ifelse(rater1$tema1 == "valore" | rater1$tema2 == "valore" | rater1$tema3 == "valore" | rater1$tema4 == "valore" | rater1$tema5 == "valore" | rater1$tema6 == "valore" | rater1$tema7 == "valore" | rater1$tema8 == "valore", 1, 0)
+rater1$value_dummy <- ifelse(is.na(rater1$value_dummy), 0, 1)
+
+#Inclassificabile
+rater1$unclass_dummy <- ifelse(rater1$tema1 == "inclassificabile" | rater1$tema2 == "inclassificabile" | rater1$tema3 == "inclassificabile" | rater1$tema4 == "inclassificabile" | rater1$tema5 == "inclassificabile" | rater1$tema6 == "inclassificabile" | rater1$tema7 == "inclassificabile" | rater1$tema8 == "inclassificabile", 1, 0)
+rater1$unclass_dummy <- ifelse(is.na(rater1$unclass_dummy), 0, 1)
+```
+
+#Rater 2
+```{r}
+#Location
+rater2$loc_dummy <- ifelse(rater2$tema1 == "location" | rater2$tema2 == "location" | rater2$tema3 == "location" | rater2$tema4 == "location" | rater2$tema5 == "location" | rater2$tema6 == "location" | rater2$tema7 == "location" | rater2$tema8 == "location", 1, 0)
+rater2$loc_dummy <- ifelse(is.na(rater2$loc_dummy), 0, 1)
+
+#Servizio
+rater2$ser_dummy <- ifelse(rater2$tema1 == "servizio" | rater2$tema2 == "servizio" | rater2$tema3 == "servizio" | rater2$tema4 == "servizio" | rater2$tema5 == "servizio" | rater2$tema6 == "servizio" | rater2$tema7 == "servizio" | rater2$tema8 == "servizio", 1, 0)
+rater2$ser_dummy <- ifelse(is.na(rater2$ser_dummy), 0, 1)
+
+#Saluti
+rater2$greet_dummy <- ifelse(rater2$tema1 == "saluti" | rater2$tema2 == "saluti" | rater2$tema3 == "saluti" | rater2$tema4 == "saluti" | rater2$tema5 == "saluti" | rater2$tema6 == "saluti" | rater2$tema7 == "saluti" | rater2$tema8 == "saluti", 1, 0)
+rater2$greet_dummy <- ifelse(is.na(rater2$greet_dummy), 0, 1)
+
+#Stanza
+rater2$room_dummy <- ifelse(rater2$tema1 == "stanza" | rater2$tema2 == "stanza" | rater2$tema3 == "stanza" | rater2$tema4 == "stanza" | rater2$tema5 == "stanza" | rater2$tema6 == "stanza" | rater2$tema7 == "stanza" | rater2$tema8 == "stanza", 1, 0)
+rater2$room_dummy <- ifelse(is.na(rater2$room_dummy), 0, 1) 
+
+#Servizi dell'hotel
+rater2$amenit_dummy <- ifelse(rater2$tema1 == "servizi dell'hotel" | rater2$tema2 == "servizi dell'hotel" | rater2$tema3 == "servizi dell’hotel" | rater2$tema4 == "servizi dell'hotel" | rater2$tema5 == "servizi dell'hotel" | rater2$tema6 == "servizi dell’hotel" | rater2$tema7 == "servizi dell'hotel" | rater2$tema8 == "servizi dell'hotel", 1, 0)
+rater2$amenit_dummy <- ifelse(is.na(rater2$amenit_dummy), 0, 1) 
+
+#Servizi di ristorazione
+rater2$food_dummy <- ifelse(rater2$tema1 == "servizi di ristorazione" | rater2$tema2 == "servizi di ristorazione" | rater2$tema3 == "servizi di ristorazione" | rater2$tema4 == "servizi di ristorazione" | rater2$tema5 == "servizi di ristorazione" | rater2$tema6 == "servizi di ristorazione" | rater2$tema7 == "servizi di ristorazione" | rater2$tema8 == "servizi di ristorazione", 1, 0)
+rater2$food_dummy <- ifelse(is.na(rater2$food_dummy), 0, 1) 
+
+#Valore
+rater2$value_dummy <- ifelse(rater2$tema1 == "valore" | rater2$tema2 == "valore" | rater2$tema3 == "valore" | rater2$tema4 == "valore" | rater2$tema5 == "valore" | rater2$tema6 == "valore" | rater2$tema7 == "valore" | rater2$tema8 == "valore", 1, 0)
+rater2$value_dummy <- ifelse(is.na(rater2$value_dummy), 0, 1)
+
+#Inclassificabile
+rater2$unclass_dummy <- ifelse(rater2$tema1 == "inclassificabile" | rater2$tema2 == "inclassificabile" | rater2$tema3 == "inclassificabile" | rater2$tema4 == "inclassificabile" | rater2$tema5 == "inclassificabile" | rater2$tema6 == "inclassificabile" | rater2$tema7 == "inclassificabile" | rater2$tema8 == "inclassificabile", 1, 0)
+rater2$unclass_dummy <- ifelse(is.na(rater2$unclass_dummy), 0, 1)
+
+rater2$name <- "rater2"
+```
+
+#Rater 3
+
+```{r}
+#Location
+rater3$loc_dummy <- ifelse(rater3$tema1 == "location" | rater3$tema2 == "location" | rater3$tema3 == "location" | rater3$tema4 == "location" | rater3$tema5 == "location" | rater3$tema6 == "location" | rater3$tema7 == "location" | rater3$tema8 == "location", 1, 0)
+rater3$loc_dummy <- ifelse(is.na(rater3$loc_dummy), 0, 1)
+
+#Servizio
+rater3$ser_dummy <- ifelse(rater3$tema1 == "servizio" | rater3$tema2 == "servizio" | rater3$tema3 == "servizio" | rater3$tema4 == "servizio" | rater3$tema5 == "servizio" | rater3$tema6 == "servizio" | rater3$tema7 == "servizio" | rater3$tema8 == "servizio", 1, 0)
+rater3$ser_dummy <- ifelse(is.na(rater3$ser_dummy), 0, 1)
+
+#Saluti
+rater3$greet_dummy <- ifelse(rater3$tema1 == "saluti" | rater3$tema2 == "saluti" | rater3$tema3 == "saluti" | rater3$tema4 == "saluti" | rater3$tema5 == "saluti" | rater3$tema6 == "saluti" | rater3$tema7 == "saluti" | rater3$tema8 == "saluti", 1, 0)
+rater3$greet_dummy <- ifelse(is.na(rater3$greet_dummy), 0, 1)
+
+#Stanza
+rater3$room_dummy <- ifelse(rater3$tema1 == "stanza" | rater3$tema2 == "stanza" | rater3$tema3 == "stanza" | rater3$tema4 == "stanza" | rater3$tema5 == "stanza" | rater3$tema6 == "stanza" | rater3$tema7 == "stanza" | rater3$tema8 == "stanza", 1, 0)
+rater3$room_dummy <- ifelse(is.na(rater3$room_dummy), 0, 1) 
+
+#Servizi dell'hotel
+rater3$amenit_dummy <- ifelse(rater3$tema1 == "servizi dell’hotel" | rater3$tema2 == "servizi dell’hotel" | rater3$tema3 == "servizi dell’hotel" | rater3$tema4 == "servizi dell’hotel" | rater3$tema5 == "servizi dell’hotel" | rater3$tema6 == "servizi dell’hotel" | rater3$tema7 == "servizi dell’hotel" | rater3$tema8 == "servizi dell’hotel", 1, 0)
+rater3$amenit_dummy <- ifelse(is.na(rater3$amenit_dummy), 0, 1)
+
+#Servizi di ristorazione
+rater3$food_dummy <- ifelse(rater3$tema1 == "servizi di ristorazione" | rater3$tema2 == "servizi di ristorazione" | rater3$tema3 == "servizi di ristorazione" | rater3$tema4 == "servizi di ristorazione" | rater3$tema5 == "servizi di ristorazione" | rater3$tema6 == "servizi di ristorazione" | rater3$tema7 == "servizi di ristorazione" | rater3$tema8 == "servizi di ristorazione", 1, 0)
+rater3$food_dummy <- ifelse(is.na(rater3$food_dummy), 0, 1)
+
+#Valore
+rater3$value_dummy <- ifelse(rater3$tema1 == "valore" | rater3$tema2 == "valore" | rater3$tema3 == "valore" | rater3$tema4 == "valore" | rater3$tema5 == "valore" | rater3$tema6 == "valore" | rater3$tema7 == "valore" | rater3$tema8 == "valore", 1, 0)
+rater3$value_dummy <- ifelse(is.na(rater3$value_dummy), 0, 1)
+
+#Inclassificabile
+rater3$unclass_dummy <- ifelse(rater3$tema1 == "inclassificabile" | rater3$tema2 == "inclassificabile" | rater3$tema3 == "inclassificabile" | rater3$tema4 == "inclassificabile" | rater3$tema5 == "inclassificabile" | rater3$tema6 == "inclassificabile" | rater3$tema7 == "inclassificabile" | rater3$tema8 == "inclassificabile", 1, 0)
+rater3$unclass_dummy <- ifelse(is.na(rater3$unclass_dummy), 0, 1)
+
+rater3$name <- "rater3"
+```
+
+#Rater 4
+
+```{r}
+#Location
+rater4$loc_dummy <- ifelse(rater4$tema1 == "location" | rater4$tema2 == "location" | rater4$tema3 == "location" | rater4$tema4 == "location" | rater4$tema5 == "location" | rater4$tema6 == "location" | rater4$tema7 == "location" | rater4$tema8 == "location", 1, 0)
+rater4$loc_dummy <- ifelse(is.na(rater4$loc_dummy), 0, 1)
+
+#Servizio
+rater4$ser_dummy <- ifelse(rater4$tema1 == "servizio" | rater4$tema2 == "servizio" | rater4$tema3 == "servizio" | rater4$tema4 == "servizio" | rater4$tema5 == "servizio" | rater4$tema6 == "servizio" | rater4$tema7 == "servizio" | rater4$tema8 == "servizio", 1, 0)
+rater4$ser_dummy <- ifelse(is.na(rater4$ser_dummy), 0, 1)
+
+#Saluti
+rater4$greet_dummy <- ifelse(rater4$tema1 == "saluti" | rater4$tema2 == "saluti" | rater4$tema3 == "saluti" | rater4$tema4 == "saluti" | rater4$tema5 == "saluti" | rater4$tema6 == "saluti" | rater4$tema7 == "saluti" | rater4$tema8 == "saluti", 1, 0)
+rater4$greet_dummy <- ifelse(is.na(rater4$greet_dummy), 0, 1)
+
+#Stanza
+rater4$room_dummy <- ifelse(rater4$tema1 == "stanza" | rater4$tema2 == "stanza" | rater4$tema3 == "stanza" | rater4$tema4 == "stanza" | rater4$tema5 == "stanza" | rater4$tema6 == "stanza" | rater4$tema7 == "stanza" | rater4$tema8 == "stanza", 1, 0)
+rater4$room_dummy <- ifelse(is.na(rater4$room_dummy), 0, 1) 
+
+#Servizi dell'hotel
+rater4$amenit_dummy <- ifelse(rater4$tema1 == "servizi dell'hotel" | rater4$tema2 == "servizi dell'hotel" | rater4$tema3 == "servizi dell'hotel" | rater4$tema4 == "servizi dell'hotel" | rater4$tema5 == "servizi dell'hotel" | rater4$tema6 == "servizi dell'hotel" | rater4$tema7 == "servizi dell'hotel" | rater4$tema8 == "servizi dell'hotel", 1, 0)
+rater4$amenit_dummy <- ifelse(is.na(rater4$amenit_dummy), 0, 1)
+
+#Servizi di ristorazione
+rater4$food_dummy <- ifelse(rater4$tema1 == "servizi di ristorazione" | rater4$tema2 == "servizi di ristorazione" | rater4$tema3 == "servizi di ristorazione" | rater4$tema4 == "servizi di ristorazione" | rater4$tema5 == "servizi di ristorazione" | rater4$tema6 == "servizi di ristorazione" | rater4$tema7 == "servizi di ristorazione" | rater4$tema8 == "servizi di ristorazione", 1, 0)
+rater4$food_dummy <- ifelse(is.na(rater4$food_dummy), 0, 1)
+
+#Valore
+rater4$value_dummy <- ifelse(rater4$tema1 == "valore" | rater4$tema2 == "valore" | rater4$tema3 == "valore" | rater4$tema4 == "valore" | rater4$tema5 == "valore" | rater4$tema6 == "valore" | rater4$tema7 == "valore" | rater4$tema8 == "valore", 1, 0)
+rater4$value_dummy <- ifelse(is.na(rater4$value_dummy), 0, 1)
+
+#Inclassificabile
+rater4$unclass_dummy <- ifelse(rater4$tema1 == "inclassificabile" | rater4$tema2 == "inclassificabile" | rater4$tema3 == "inclassificabile" | rater4$tema4 == "inclassificabile" | rater4$tema5 == "inclassificabile" | rater4$tema6 == "inclassificabile" | rater4$tema7 == "inclassificabile" | rater4$tema8 == "inclassificabile", 1, 0)
+rater4$unclass_dummy <- ifelse(is.na(rater4$unclass_dummy), 0, 1)
+
+rater4$name <- "rater4"
+```
+
+#Rater 5
+
+```{r}
+#Location
+rater5$loc_dummy <- ifelse(rater5$tema1 == "location" | rater5$tema2 == "location" | rater5$tema3 == "location" | rater5$tema4 == "location" | rater5$tema5 == "location" | rater5$tema6 == "location" | rater5$tema7 == "location" | rater5$tema8 == "location", 1, 0)
+rater5$loc_dummy <- ifelse(is.na(rater5$loc_dummy), 0, 1)
+
+#Servizio
+rater5$ser_dummy <- ifelse(rater5$tema1 == "servizio" | rater5$tema2 == "servizio" | rater5$tema3 == "servizio" | rater5$tema4 == "servizio" | rater5$tema5 == "servizio" | rater5$tema6 == "servizio" | rater5$tema7 == "servizio" | rater5$tema8 == "servizio", 1, 0)
+rater5$ser_dummy <- ifelse(is.na(rater5$ser_dummy), 0, 1)
+
+#Saluti
+rater5$greet_dummy <- ifelse(rater5$tema1 == "saluti" | rater5$tema2 == "saluti" | rater5$tema3 == "saluti" | rater5$tema4 == "saluti" | rater5$tema5 == "saluti" | rater5$tema6 == "saluti" | rater5$tema7 == "saluti" | rater5$tema8 == "saluti", 1, 0)
+rater5$greet_dummy <- ifelse(is.na(rater5$greet_dummy), 0, 1)
+
+#Stanza
+rater5$room_dummy <- ifelse(rater5$tema1 == "stanza" | rater5$tema2 == "stanza" | rater5$tema3 == "stanza" | rater5$tema4 == "stanza" | rater5$tema5 == "stanza" | rater5$tema6 == "stanza" | rater5$tema7 == "stanza" | rater5$tema8 == "stanza", 1, 0)
+rater5$room_dummy <- ifelse(is.na(rater5$room_dummy), 0, 1) 
+
+#Servizi dell'hotel
+rater5$amenit_dummy <- ifelse(rater5$tema1 == "servizi dell'hotel" | rater5$tema2 == "servizi dell'hotel" | rater5$tema3 == "servizi dell'hotel" | rater5$tema4 == "servizi dell'hotel" | rater5$tema5 == "servizi dell'hotel" | rater5$tema6 == "servizi dell'hotel" | rater5$tema7 == "servizi dell'hotel" | rater5$tema8 == "servizi dell'hotel", 1, 0)
+rater5$amenit_dummy <- ifelse(is.na(rater5$amenit_dummy), 0, 1)
+
+#Servizi di ristorazione
+rater5$food_dummy <- ifelse(rater5$tema1 == "servizi di ristorazione" | rater5$tema2 == "servizi di ristorazione" | rater5$tema3 == "servizi di ristorazione" | rater5$tema4 == "servizi di ristorazione" | rater5$tema5 == "servizi di ristorazione" | rater5$tema6 == "servizi di ristorazione" | rater5$tema7 == "servizi di ristorazione" | rater5$tema8 == "servizi di ristorazione", 1, 0)
+rater5$food_dummy <- ifelse(is.na(rater5$food_dummy), 0, 1)
+
+#Valore
+rater5$value_dummy <- ifelse(rater5$tema1 == "valore" | rater5$tema2 == "valore" | rater5$tema3 == "valore" | rater5$tema4 == "valore" | rater5$tema5 == "valore" | rater5$tema6 == "valore" | rater5$tema7 == "valore" | rater5$tema8 == "valore", 1, 0)
+rater5$value_dummy <- ifelse(is.na(rater5$value_dummy), 0, 1)
+
+#Inclassificabile
+rater5$unclass_dummy <- ifelse(rater5$tema1 == "inclassificabile" | rater5$tema2 == "inclassificabile" | rater5$tema3 == "inclassificabile" | rater5$tema4 == "inclassificabile" | rater5$tema5 == "inclassificabile" | rater5$tema6 == "inclassificabile" | rater5$tema7 == "inclassificabile" | rater5$tema8 == "inclassificabile", 1, 0)
+rater5$unclass_dummy <- ifelse(is.na(rater5$unclass_dummy), 0, 1)
+
+rater5$name <- "rater5"
+```
+
+#Join 
+
+```{r}
+install.packages('sqldf')
+library(sqldf)
+#clean up the datasets
+rater1_clean <- rater1 %>% select(id, loc_dummy, ser_dummy, greet_dummy, room_dummy, amenit_dummy, food_dummy, value_dummy, unclass_dummy, name)
+View(rater1_clean)
+rater2_clean <- rater2 %>% select(id, loc_dummy, ser_dummy, greet_dummy, room_dummy, amenit_dummy, food_dummy, value_dummy, unclass_dummy, name)
+rater3_clean <- rater3 %>% select(id, loc_dummy, ser_dummy, greet_dummy, room_dummy, amenit_dummy, food_dummy, value_dummy, unclass_dummy, name)
+rater4_clean <- rater4 %>% select(id, loc_dummy, ser_dummy, greet_dummy, room_dummy, amenit_dummy, food_dummy, value_dummy, unclass_dummy, name)
+rater5_clean <- rater5 %>% select(id, loc_dummy, ser_dummy, greet_dummy, room_dummy, amenit_dummy, food_dummy, value_dummy, unclass_dummy, name)
+
+#join all datasets
+dummy_tot <- sqldf('select a.*, b.*, c.*, d.*, e.* from rater1_clean a, rater2_clean b, rater3_clean c, rater4_clean d, rater5_clean e
+where a.id == b.id == c.id == d.id == e.id')
+
+#create totals
+dummy_tot2 <- dummy_tot %>% group_by(id) %>%  mutate(tot_loc = sum(loc_dummy, loc_dummy..12, loc_dummy..22, loc_dummy..32, loc_dummy..42), tot_ser = sum(ser_dummy, ser_dummy..13, ser_dummy..23, ser_dummy..33, ser_dummy..43), tot_greet = sum(greet_dummy, greet_dummy..14, greet_dummy..24, greet_dummy..34, greet_dummy..44), tot_room = sum(room_dummy, room_dummy..15, room_dummy..25, room_dummy..35, room_dummy..45), tot_amenit = sum(amenit_dummy, amenit_dummy..16, amenit_dummy..26, amenit_dummy..36, amenit_dummy..46), tot_food = sum(food_dummy, food_dummy..17, food_dummy..27, food_dummy..37, food_dummy..47), tot_value = sum(value_dummy, value_dummy..18, value_dummy..28, value_dummy..38, value_dummy..48), tot_unclass = sum(unclass_dummy, unclass_dummy..19, unclass_dummy..29, unclass_dummy..39, unclass_dummy..49))
+
+dummy_tot_clean <- dummy_tot2 %>% select(id, tot_loc, tot_ser, tot_greet, tot_room, tot_amenit, tot_food, tot_value, tot_unclass)
+
+final <- data.frame(id = rep(c(1:200), each = 8), topic = rep(c('location', 'service', 'greetings and salutations', 'room', 'hotel amenities', 'food', 'value', 'unclassifiable'),200))
+
+final$loc <- rep(dummy_tot2$tot_loc, each = 8)
+final$ser <- rep(dummy_tot2$tot_ser, each = 8)
+final$greet <- rep(dummy_tot2$tot_greet, each = 8)
+final$r <- rep(dummy_tot2$tot_room, each = 8)
+final$amenit <- rep(dummy_tot2$tot_amenit, each = 8)
+final$f <- rep(dummy_tot2$tot_food, each = 8)
+final$v <- rep(dummy_tot2$tot_value, each = 8)
+final$unclass <- rep(dummy_tot2$tot_unclass, each = 8)
+
+final$location <- ifelse(final$topic == 'location', final$loc, 0)
+final$service <- ifelse(final$topic == 'service', final$ser, 0)
+final$greetings <- ifelse(final$topic == 'greetings and salutations', final$greet, 0)
+final$room <- ifelse(final$topic == 'room', final$r, 0)
+final$hotel_amenities <- ifelse(final$topic == 'hotel amenities', final$amenit, 0)
+final$food <- ifelse(final$topic == 'food', final$f, 0)
+final$value <- ifelse(final$topic == 'value', final$v, 0)
+final$unclassifiable <- ifelse(final$topic == 'unclassifiable', final$unclass, 0)
+
+finalFleissKappa <- final %>% select(id, topic, location, service, greetings, room, hotel_amenities, food, value, unclassifiable)
+finalFleissKappa <- finalFleissKappa %>%  mutate(no_topic = (5 - (rowSums(finalFleissKappa[,3:10]))))
+
+```
+
+#Fleiss Kappa
+
+```{r}
+ps_func <- function(x) {
+sum(x)/(length(x)*5)
+}
+ps<- finalFleissKappa[,3:11] %>%  summarise_all(ps_func)
+Pe <- sum(ps^2)#Pe fleiss kappa formula
+p_func <- function(x) {
+x <- x^2
+y <- rowSums(x)
+(y-5)/20
+}
+p <- p_func(finalFleissKappa[,3:11]) #Ps for each row of the fleiss kappa
+p <- p_func(finalFleissKappa[,3:11]) #Ps for each row of the fleiss kappa
+P <- sum(p)/length(finalFleissKappa$id) #P average in the fleiss kappa
+k1 <- (P-Pe)/(1-Pe)#fleiss kappa
+```
+
+#Fleiss Kappa without unclassifiable column
+
+```{r}
+finalFleissKappa2 <- final %>% select(id, topic, location, service, greetings, room, hotel_amenities, food, value)
+finalFleissKappa3 <- finalFleissKappa2 %>% mutate(no_topic = (5 - (rowSums(finalFleissKappa[,3:9]))))
+
+ps<- finalFleissKappa3[,3:10] %>%  summarise_all(ps_func)
+Pe <- sum(ps^2)#Pe fleiss kappa formula
+p_func <- function(x) {
+x <- x^2
+y <- rowSums(x)
+(y-5)/20
+}
+p <- p_func(finalFleissKappa3[,3:10]) #Ps for each row of the fleiss kappa
+P <- sum(p)/length(finalFleissKappa3$id) #P average in the fleiss kappa
+k1 <- (P-Pe)/(1-Pe)#fleiss kappa
+
+
+```
+
