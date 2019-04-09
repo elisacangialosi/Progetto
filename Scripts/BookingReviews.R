@@ -52,7 +52,7 @@ data_all <- rbind(data_florence,
                   data_venice,
                   data_verona)
 #is.na(data_all) <- data_all==' ' #consider missing values as NAs
-data_all[is.na(data_all)] <- " " #consider NAs as blanks
+#data_all[is.na(data_all)] <- " " #consider NAs as blanks
 
 #export as excel file
 install.packages("xlsx")
@@ -60,7 +60,13 @@ library(xlsx)
 write.csv(data_all, "/users/elisacangialosi/Desktop/LouisianaStateUniversity/IISemester/ProjectR/dataAll.csv", row.names = TRUE ,na = " " )
 
 #Read data_all
-#data_all <- read.csv("/users/elisacangialosi/Desktop/LouisianaStateUniversity/IISemester/ProjectR/DataOutput/dataAll.csv", na = "NA", header = TRUE)
+df <- read.csv("/users/elisacangialosi/Desktop/LouisianaStateUniversity/IISemester/Progetto/Data/DataOutput/dataAll.csv", na = "NA", header = TRUE)
+install.packages("devtools")
+devtools::install_github("jimhester/vroom", force = T)
+library(vroom)
+data_all <- vroom("/users/elisacangialosi/Desktop/LouisianaStateUniversity/IISemester/Progetto/Data/DataOutput/dataAll.csv", delim = ',')
+#data_all <- data_all %>% top_n(1000, hotelid)
+is.na(data_all) <- data_all==' '
 
 #Dataset with only positive
 Positive <- data_all %>% select(positive)
@@ -79,23 +85,21 @@ library(tidyverse)
 data_all_full <- data_all %>% unite(fullText, positive, negative, sep = " " )
 is.na(data_all_full) <- data_all_full == ' ' #consider missing values as NAs
 #data_all_full[is.na(data_all_full)] <- " " #consider NAs as blanks
+
 #Create a review ID column
 data_all_full$reviewID <- seq.int(nrow(data_all_full))
-fullReview <- data_all_reviewsOnly[8]
-write.csv(data_all_reviewsOnly, "/users/elisacangialosi/Desktop/LouisianaStateUniversity/IISemester/ProjectR/dataOnlyReviews.csv", row.names = TRUE ,na = " " )
 
+#write.csv(data_all_full, "/users/elisacangialosi/Desktop/LouisianaStateUniversity/IISemester/ProjectR/dataFullText.csv", row.names = TRUE ,na = " " )
 
-table(is.na(data_all$response)) #number of responses
-reviewResponse_it <- data_all_reviewsOnly %>% 
-  filter(detect_language(data_all_reviewsOnly$full) == 'it') #detect italian reviews only
-reviewResponse <- reviewResponse_it[!is.na(reviewResponse_it$response),]
-reviewResponse1 <- reviewResponse[c(8,9)]
-reviewResponse2 <-reviewResponse1 %>% 
-  select(full) %>% 
-  bind_rows(
-    reviewResponse1 %>% 
-      transmute(full = response)
-  )
+table(is.na(data_all_full$response)) #number of responses
+
+#Select only italian reviews 
+library(cld2)
+it_reviewResponse <- data_all_full %>% 
+  filter(detect_language(data_all_full$fullText) == 'it') #detect italian reviews only
+table(is.na(it_reviewResponse$response)) #number of responses
+
+it_reviewResponse <- it_reviewResponse[!is.na(it_reviewResponse$response),]
 
 #Take a sample of 500 random full reviews and responses
 Sample_ReviewResponse <- sample_n(reviewResponse1, size = 500)
