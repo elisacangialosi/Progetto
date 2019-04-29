@@ -11,7 +11,7 @@ library(tidytext)
 
 #Collapse into a one line text and switch text to lower case
 ```{r}
-review_text <- paste(Sample$full)
+review_text <- paste(en_reviewResponse$fullText)
 review_text <- tolower(review_text)
 review_text
 ```
@@ -42,21 +42,18 @@ tail(sorted.table.split, 15)
 ```
 #strplit() splits at non-words character. So words like "can't" are split into "can" and "t". 
 
-```{r}
-library(dplyr)
-reviews <- tibble(Sample)
-```
-
-
 #break the text into individual tokens
 ```{r}
-reviews <- Sample %>%
-  unnest_tokens(word, full)
-head(sort(table(reviews), decreasing = TRUE), 15) #the 15 most frequent words are not interesting because they consist of closed-class words, i.e. words that serve a grammatical function.Getting rid of grammatical words would have the advantage of focusing on open class words (lexical words).
+reviews <- en_reviewResponse %>%
+  unnest_tokens(word, fullText) %>% 
+    anti_join(stop_words) %>% 
+  removeNumbers(reviews$word, ucp = FALSE)
+typeof(reviews$word)
+head(sort(table(reviews$word), decreasing = TRUE), 30) #the 15 most frequent words are not interesting because they consist of closed-class words, i.e. words that serve a grammatical function.Getting rid of grammatical words would have the advantage of focusing on open class words (lexical words).
 ```
  
 ```{r}
-reviews <- reviews %>% filter(!word %in% stopwords("italian"))
+reviews <- reviews %>% filter(!word %in% stopwords("english"))
 frequency <- reviews %>% count(word, sort = TRUE)
 ```
 
@@ -65,12 +62,14 @@ library(scales)
 library(ggplot2)
 reviews %>%
   count(word, sort = TRUE) %>%
-  filter(n > 50) %>%
+  filter(n > 5000) %>%
   mutate(word = reorder(word, n)) %>%
   ggplot(aes(word, n)) +
-  geom_col() +
+  geom_col(fill = "lightblue") +
   xlab(NULL) +
-  coord_flip()
+  coord_flip() +
+  labs(title = "Most common words in review text 2016 to date",
+       subtitle = "Among 87,633 reviews; stop words removed")
 
 ```
 

@@ -19,7 +19,7 @@ goldenSet2 <- goldenSet %>% arrange(group) # I order the dataset by the group, t
 goldenSet2$index <- c(1:length(goldenSet2$reviewID)) #I create a new column that uniquely identifies each sentence
 x <- goldenSet2 %>% distinct(group) #create a vector with unique group number, I will randomly select group for my validation
 set.seed(0500)
-s10 <- sample(x$group,40)#random sample of 500 groups on which we will create our golden set
+s10 <- sample(x$group,10)#random sample of 10 groups on which we will create our golden set
 goldenSetlabel10 <- filter(goldenSet2,group %in%s10) # final dataset subject to manual labeling
 
 goldenSetlabel10Final <- goldenSetlabel10 %>% 
@@ -43,8 +43,8 @@ goldenSet$group <- gsub("([[:alpha:]]+)","",goldenSet$reviewID) #create a variab
 goldenSet2 <- goldenSet %>% arrange(group) # I order the dataset by the group, the objective is to select random group and run the validation of individual sentences as well as reviews of complete pairs of review response
 goldenSet2$index <- c(1:length(goldenSet2$reviewID)) #I create a new column that uniquely identifies each sentence
 x <- goldenSet2 %>% distinct(group) #create a vector with unique group number, I will randomly select group for my validation
-set.seed(0800)
-s50 <- sample(x$group,50)#random sample of 500 groups on which we will create our golden set
+set.seed(0700)
+s <- sample(x$group,40)#random sample of 80 groups on which we will create our golden set
 goldenSetlabel50 <- filter(goldenSet2,group %in%s50) # final dataset subject to manual labeling
 
 goldenSetlabel50Final <- goldenSetlabel50 %>% 
@@ -58,7 +58,7 @@ goldStandard50 <- goldStandard50[sample(1:nrow(goldStandard50)), ]
 View(goldStandard50)
 
 
-write.csv(goldStandard50, "/users/elisacangialosi/Desktop/LouisianaStateUniversity/IISemester/BookingReviews/ProjectR/GoldenStandardSet/Prova2/Gold50/goldStandard50.csv", row.names = TRUE ,na = " " )
+#write.csv(goldStandard50, "/users/elisacangialosi/Desktop/LouisianaStateUniversity/IISemester/BookingReviews/ProjectR/GoldenStandardSet/Prova2/Gold50/goldStandard50.csv", row.names = TRUE ,na = " " )
 ```
 
 #Import 10goldstandard
@@ -274,12 +274,13 @@ rater3_10clean <- rater3_10 %>% select(id, loc_dummy, ser_dummy, greet_dummy, ro
 rater4_10clean <- rater4_10 %>% select(id, loc_dummy, ser_dummy, greet_dummy, room_dummy, amenit_dummy, food_dummy, value_dummy, unclass_dummy, name)
 rater5_10clean <- rater5_10 %>% select(id, loc_dummy, ser_dummy, greet_dummy, room_dummy, amenit_dummy, food_dummy, value_dummy, unclass_dummy, name)
 
-
-dummy_tot10 <- sqldf('select a.*, b.*, c.*, d.*, e.* from rater1_10clean a, rater2_10clean b, rater3_10clean c, rater4_10clean d, rater5_10clean e
-where a.id == b.id == c.id == d.id == e.id')
+join1 <- inner_join(rater1_10clean,rater2_10clean, by = "id")
+join2 <- inner_join(join1 ,rater3_10clean, by = "id")
+join3 <- inner_join(join2 ,rater4_10clean, by = "id")
+dummy_tot10 <- inner_join(join3, rater5_10clean, by = "id")
 
 #create totals
-dummy_tot2_10 <- dummy_tot10 %>% group_by(id) %>%  mutate(tot_loc = sum(loc_dummy, loc_dummy..12, loc_dummy..22, loc_dummy..32, loc_dummy..42), tot_ser = sum(ser_dummy, ser_dummy..13, ser_dummy..23, ser_dummy..33, ser_dummy..43), tot_greet = sum(greet_dummy, greet_dummy..14, greet_dummy..24, greet_dummy..34, greet_dummy..44), tot_room = sum(room_dummy, room_dummy..15, room_dummy..25, room_dummy..35, room_dummy..45), tot_amenit = sum(amenit_dummy, amenit_dummy..16, amenit_dummy..26, amenit_dummy..36, amenit_dummy..46), tot_food = sum(food_dummy, food_dummy..17, food_dummy..27, food_dummy..37, food_dummy..47), tot_value = sum(value_dummy, value_dummy..18, value_dummy..28, value_dummy..38, value_dummy..48), tot_unclass = sum(unclass_dummy, unclass_dummy..19, unclass_dummy..29, unclass_dummy..39, unclass_dummy..49))
+dummy_tot2_10 <- dummy_tot10 %>% group_by(id) %>%  mutate(tot_loc = sum(loc_dummy.x, loc_dummy.y, loc_dummy.x.x, loc_dummy.y.y, loc_dummy), tot_ser = sum(ser_dummy.x, ser_dummy.y, ser_dummy.x.x, ser_dummy.y.y, ser_dummy), tot_greet = sum(greet_dummy.x, greet_dummy.y, greet_dummy.x.x, greet_dummy.y.y, greet_dummy), tot_room = sum(room_dummy.x, room_dummy.y, room_dummy.x.x, room_dummy.y.y, room_dummy), tot_amenit = sum(amenit_dummy.x, amenit_dummy.y, amenit_dummy.x.x, amenit_dummy.y.y, amenit_dummy), tot_food = sum(food_dummy.x, food_dummy.y, food_dummy.x.x, food_dummy.y.y, food_dummy), tot_value = sum(value_dummy.x, value_dummy.y, value_dummy.x.x, value_dummy.y.y, value_dummy), tot_unclass = sum(unclass_dummy.x, unclass_dummy.y, unclass_dummy.x.x, unclass_dummy.y.y, unclass_dummy))
 
 dummy_tot_clean10 <- dummy_tot2_10 %>% select(id, tot_loc, tot_ser, tot_greet, tot_room, tot_amenit, tot_food, tot_value, tot_unclass)
 
@@ -311,6 +312,9 @@ final10$unclassifiable <- ifelse(final10$topic == 'unclassifiable', final10$uncl
 finalFleissKappa10 <- final10 %>% select(id, topic, location, service, greetings, room, hotel_amenities, food, value)
 finalFleissKappa10_2 <- finalFleissKappa10 %>% mutate(no_topic = (5 - (rowSums(finalFleissKappa10[,3:9]))))
 
+ps_func <- function(x) {
+sum(x)/(length(x)*5)
+}
 ps<- finalFleissKappa10_2[,3:10] %>%  summarise_all(ps_func)
 Pe <- sum(ps^2)#Pe fleiss kappa formula
 p_func <- function(x) {
@@ -321,5 +325,13 @@ y <- rowSums(x)
 p <- p_func(finalFleissKappa10_2[,3:10]) #Ps for each row of the fleiss kappa
 P <- sum(p)/length(finalFleissKappa10_2$id) #P average in the fleiss kappa
 k1 <- (P-Pe)/(1-Pe)#fleiss kappa
+
+#Fleiss Kappa for complete set = 0.86691
+```
+
+#Import 40 gold Standard
+
+```{r}
+
 ```
 

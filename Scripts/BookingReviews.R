@@ -1,7 +1,7 @@
 remove(list = ls()) #clear environment
 
 #load rome.RDA first
-data_rome <- x[!duplicated(x[c(1,2,3,5)]),]
+data_rome <- x %>% distinct()
 unique(data_rome$hotelid)
 data_rome$city <- "Rome"
 
@@ -20,28 +20,28 @@ mydata[mydata$hotelid == "/hotel/it/hotelbledrome.html",]
 
 #Taipei
 taipei <- read.csv("/users/elisacangialosi/Desktop/LouisianaStateUniversity/IISemester/ProjectR/taipei_htonly.csv", header = TRUE)
-data_taipei <- taipei[!duplicated(taipei[c(1,2,3,5)]),]
+data_taipei <- taipei %>% distinct()
 data_taipei$city <-"Taipei"
 
 #Milan
 milan <- read.csv("/users/elisacangialosi/Desktop/LouisianaStateUniversity/IISemester/ProjectR/milan.csv", header = TRUE)
-data_milan <- milan[!duplicated(milan[c(1,2,3,5)]),]
+data_milan <- milan %>% distinct()
 data_milan$city <-"Milan"
 
 
 #Venice
 venice <- read.csv("/users/elisacangialosi/Desktop/LouisianaStateUniversity/IISemester/ProjectR/venice.csv", header = TRUE)
-data_venice <- venice[!duplicated(venice[c(1,2,3,5)]),]
+data_venice <- venice %>% distinct()
 data_venice$city <-"Venice"
 
 #Florence
 florence <- read.csv("/users/elisacangialosi/Desktop/LouisianaStateUniversity/IISemester/ProjectR/florence.csv", header = TRUE)
-data_florence <- florence[!duplicated(florence[c(1,2,3,5)]),]
+data_florence <- florence %>% distinct()
 data_florence$city <-"Florence"
 
 #Verona
 verona <- read.csv("/users/elisacangialosi/Desktop/LouisianaStateUniversity/IISemester/ProjectR/DataInput/verona.csv", na = "NA", header = TRUE)
-data_verona <- verona[!duplicated(verona[c(1,2,3,5)]),]
+data_verona <- verona %>% distinct()
 data_verona$city <-"Verona"
 
 #merging dataframes
@@ -60,13 +60,12 @@ library(xlsx)
 write.csv(data_all, "/users/elisacangialosi/Desktop/LouisianaStateUniversity/IISemester/ProjectR/dataAll.csv", row.names = TRUE ,na = " " )
 
 #Read data_all
-df <- read.csv("/users/elisacangialosi/Desktop/LouisianaStateUniversity/IISemester/Progetto/Data/DataOutput/dataAll.csv", na = "NA", header = TRUE)
-install.packages("devtools")
-devtools::install_github("jimhester/vroom", force = T)
-library(vroom)
-data_all <- vroom("/users/elisacangialosi/Desktop/LouisianaStateUniversity/IISemester/Progetto/Data/DataOutput/dataAll.csv", delim = ',')
-#data_all <- data_all %>% top_n(1000, hotelid)
-is.na(data_all) <- data_all==' '
+#df <- read.csv("/users/elisacangialosi/Desktop/LouisianaStateUniversity/IISemester/Progetto/Data/DataOutput/dataAll.csv", na = "NA", header = TRUE)
+#install.packages("devtools")
+#devtools::install_github("jimhester/vroom", force = T)
+#library(vroom)
+#data_all <- vroom("/users/elisacangialosi/Desktop/LouisianaStateUniversity/IISemester/Progetto/Data/DataOutput/dataAll.csv", delim = ',')
+#data_all <- data_all_full %>% top_n(1000, hotelid)
 
 #Dataset with only positive
 Positive <- data_all %>% select(positive)
@@ -88,10 +87,11 @@ is.na(data_all_full) <- data_all_full == ' ' #consider missing values as NAs
 
 #Create a review ID column
 data_all_full$reviewID <- seq.int(nrow(data_all_full))
+#Select only review/response pairs
+table(is.na(data_all_full$response)) #number of responses
+full_reviewResponse <- data_all_full[!is.na(data_all_full$response),]
 
 #write.csv(data_all_full, "/users/elisacangialosi/Desktop/LouisianaStateUniversity/IISemester/ProjectR/dataFullText.csv", row.names = TRUE ,na = " " )
-
-table(is.na(data_all_full$response)) #number of responses
 
 #Select only italian reviews 
 library(cld2)
@@ -100,6 +100,18 @@ it_reviewResponse <- data_all_full %>%
 table(is.na(it_reviewResponse$response)) #number of responses
 
 it_reviewResponse <- it_reviewResponse[!is.na(it_reviewResponse$response),]
+write.csv(it_reviewResponse, "/users/elisacangialosi/Desktop/LouisianaStateUniversity/IISemester/Progetto/Data/mydata_it.csv", row.names = TRUE ,na = " " )
+
+#Select only english reviews
+en_reviewResponse <- data_all_full %>% 
+  filter(detect_language(data_all_full$fullText) == 'en')
+table(is.na(en_reviewResponse$response))
+
+en_reviewResponse <- en_reviewResponse[!is.na(en_reviewResponse$response),]
+write.csv(en_reviewResponse, "/users/elisacangialosi/Desktop/LouisianaStateUniversity/IISemester/Progetto/Data/mydata.csv", row.names = TRUE ,na = " " )
+
+#Save the data into a RData dataframe
+save(en_reviewResponse, file = "dataIndependent.RData")
 
 #Take a sample of 500 random full reviews and responses
 Sample_ReviewResponse <- sample_n(reviewResponse1, size = 500)
