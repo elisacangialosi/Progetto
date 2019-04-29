@@ -229,7 +229,9 @@ title_word_pairs %>%
 The network graph shows strong connections between the top several words (“friendly”, “staff”, “excellent” and “location”, "train" and "station").
 
 ###Sentiment Analysis
-Sentiment analysis can be done as an inner join. Three sentiment lexicons are available via the get_sentiments() function. Let’s look at the words with a joy score from the NRC lexicon. What are the most common joy words?
+One way to analyze the sentiment of a text is to consider the text as a combination of its individual words and the sentiment content of the whole text as the sum of the sentiment content of the individual words.
+Sentiment analysis can be done as an inner join. Three sentiment lexicons are available via the get_sentiments() function. Let’s look at the words with a joy score from the NRC lexicon. 
+What are the most common joy words?
 
 ```{r}
 nrcjoy <- get_sentiments("nrc") %>%
