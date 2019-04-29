@@ -1,6 +1,8 @@
 ---
 title: "Text Analysis of Hotel Reviews from Booking.com"
-output: github_document
+author: "Elisa Cangialosi"
+date: "April 29, 2019"
+output: html_document
 ---
 ###In this report I perform text analysis of the publicly available review data posted on Booking for the major turistic italian cities: Milan, Rome, Florence Venice and Verona.
 ##Below are some of the key findings.
@@ -262,4 +264,3 @@ bing_words %>%
   coord_flip() +
   labs(y = "Contribution to sentiment")
 ```
-
