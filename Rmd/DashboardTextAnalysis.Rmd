@@ -1,0 +1,110 @@
+---
+title: "Text Analysis of Booking.com Reviews"
+output: 
+  flexdashboard::flex_dashboard:
+runtime: shiny
+---
+
+```{r global, include=FALSE}
+require(devtools)
+library(flipTime)
+library(sqldf)
+library(NLP)
+library(dplyr)
+library(readr)
+library(tidytext)
+library(stringr)
+library(tidyr)
+library(scales)
+library(igraph)
+library(ggraph)
+library(SnowballC)
+library(wordcloud)
+library(reshape2)
+library(lubridate)
+library(ggplot2)
+library(widyr)
+library(tm)
+library(tokenizers)
+library(zoo)
+library(formattable)
+library(data.table) 
+library(plotly)
+library(countrycode)
+
+en_reviewResponse <- read.csv("/users/elisacangialosi/Desktop/LouisianaStateUniversity/IISemester/Progetto/Data/mydata.csv", header = T)
+freqWords <- read.csv("/users/elisacangialosi/Desktop/LouisianaStateUniversity/IISemester/Progetto/Data/frequentWords.csv", header = T)
+is.na(en_reviewResponse) <- en_reviewResponse == ' '
+toremoveStay = c("Stayed in ")
+en_reviewResponse$stay_date <- gsub(paste0(toremoveStay,collapse = "|"),"", en_reviewResponse$stay_date)
+en_reviewResponse$stay_date <- as.Date(paste('01', en_reviewResponse$stay_date), format='%d %b %Y')
+```
+
+Bubble Chart {data-orientation=rows}
+=====================================   
+
+Inputs {.sidebar}
+-------------------------------------
+
+```{r}
+selectInput("Continent", label = "Continent:",
+            choices = c("Americas", "Asia", "Africa", "Europe", "Oceania", "Antarctica"), selected = "Europe")  
+
+```
+   
+Row {data-height=600}
+-------------------------------------
+### Average Score of Reviews
+```{r}
+renderPlotly({
+  en_reviewResponseCountry <- en_reviewResponse %>%  group_by(reviewer_country)  %>% 
+  summarise(count= n(), avgscore_nation = mean(review_score))  %>% arrange(desc(avgscore_nation))
+  en_reviewResponseCountry$reviewer_country <- as.character(en_reviewResponseCountry$reviewer_country)
+  
+  countries <- c(en_reviewResponseCountry$reviewer_country)
+  en_reviewResponseCountry$continent <- countrycode(sourcevar = countries,
+                                                    origin = "country.name",
+                                                    destination = "continent")
+
+  names(en_reviewResponseCountry)[1]<-"Country of Origin"
+  names(en_reviewResponseCountry)[2]<-"Count"
+  names(en_reviewResponseCountry)[3]<-"Average Score"
+  names(en_reviewResponseCountry)[4]<-"Continent"
+
+  p <- en_reviewResponseCountry %>% filter(en_reviewResponseCountry$Continent == input$Continent) %>%  
+  ggplot(aes(`Country of Origin` ,`Average Score`, size = Count, color=`Country of Origin`)) +
+    geom_point() +
+    theme_bw() +
+    ylim(2, 10)+
+    theme(axis.title.x=element_blank(),
+          axis.text.x=element_blank(),
+          axis.ticks.x=element_blank())
+  
+  ggplotly(p)
+})
+```
+
+Wordcloud {data-orientation=rows}
+=====================================
+
+Inputs {.sidebar}
+-------------------------------------
+
+```{r}
+sliderInput("numberWords", label = "Max number of words:",
+            min = 50, max = 450, value = 50, step = 50)
+```
+
+   
+Row {data-height=600}
+-------------------------------------
+### Most commonly occuring words in English Reviews
+```{r}
+renderPlot({
+set.seed(1234)
+wordcloud(words = freqWords$word, freq = freqWords$n, min.freq = 500,
+          max.words= input$numberWords, random.order=FALSE, rot.per=0.35, 
+          colors=brewer.pal(8, "Dark2"))
+})
+```
+
